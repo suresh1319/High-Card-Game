@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus | Bot High Card</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono&display=swap" rel="stylesheet">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- MetaMask SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@metamask/sdk@0.4.5/dist/browser/index.js"></script>
+    
+    <!-- Ethers -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.8.0/ethers.umd.min.js"></script>
+    <!-- Config -->
+    <script src="config.js"></script>
+    <!-- Styles -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Animated Background -->
+    <div class="bg-fx">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="glass-header">
+        <div class="logo">
+            <span class="logo-icon">▲</span>
+            <span class="logo-text">NEXUS<span class="highlight">GAMES</span></span>
+        </div>
+        <div class="nav-actions">
+            <!-- Admin Gear Icon (Hidden by default, shown if owner) -->
+            <button id="adminBtn" class="nav-icon-btn hidden">
+                <span class="icon">⚙️</span>
+            </button>
+            <button id="connectBtn" class="btn-glow">
+                <span class="btn-content">Connect Wallet</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Landing Page / Rules -->
+    <section id="landingPage" class="landing-screen">
+        <div class="landing-bg-overlay"></div>
+        
+        <div class="landing-content">
+            <div class="game-logo-container">
+                <div class="game-logo-main">
+                    <span class="logo-text-top">NEXUS</span>
+                    <span class="logo-text-mid">HIGH CARD</span>
+                    <span class="logo-text-bot">TERMINAL</span>
+                </div>
+            </div>
+
+            <div class="rules-card-v2 glass-panel-v2">
+                <p class="promo-text">Not just your ordinary High Card game.</p>
+                
+                <button id="startGameBtn" class="btn-premium">
+                    <span>Start Game</span>
+                </button>
+
+                <div class="how-to-play-section">
+                    <h2>How To Play!</h2>
+                    <ul class="premium-list">
+                        <li>Connect your wallet.</li>
+                        <li>Place your bet.</li>
+                        <li>Two cards are generated on-chain.</li>
+                        <li>If your card is higher than the House, you win.</li>
+                        <li>If you win, you get your bet multiplied by the current rate.</li>
+                        <li>If it is a tie, your stake is returned.</li>
+                        <li>You can withdraw your rewards instantly after a win.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Game Context -->
+    <main id="gamePage" class="game-container hidden">
+        
+        <!-- Dashboard/Controls -->
+        <aside class="dashboard glass-panel">
+            <header>
+                <h2>Terminal</h2>
+                <p>Deploy your bet against the protocol.</p>
+            </header>
+
+            <div class="contract-balance">
+                <label>Your SCAI Balance</label>
+                <div class="balance-value" id="contractBalance">-- SCAI</div>
+            </div>
+
+            <!-- Arena Actions (Bet & Play) -->
+            <div class="arena-actions" id="desktopActions">
+                <div class="form-group">
+                    <label for="betAmount">Stake Amount (SCAI)</label>
+                    <div class="input-wrapper">
+                        <input type="number" id="betAmount" placeholder="100.00" step="0.01" min="1">
+                        <span class="currency">SCAI</span>
+                    </div>
+                </div>
+
+                <button id="playBtn" class="btn-primary" disabled>
+                    <div class="scanner"></div>
+                    <span>INITIALIZE MATCH</span>
+                </button>
+            </div>
+
+            <!-- Status Box -->
+            <div class="status-feed" id="statusFeed">
+                <div class="log-entry sys">System initialized. Waiting for connection...</div>
+            </div>
+        </aside>
+
+        <!-- The Arena -->
+        <section class="arena glass-panel">
+            <div class="arena-header">
+                <div class="score-pill" id="arenaMultiplier">Full Pay: 1.98x</div>
+            </div>
+            
+            <div class="battlefield">
+                
+                <!-- Player Side -->
+                <div class="entity-side player-side">
+                    <div class="entity-info">
+                        <div class="avatar p-avatar"></div>
+                        <h3>Challenger</h3>
+                        <p id="playerAddress">0x...</p>
+                    </div>
+                    
+                    <div class="card-slot">
+                        <div class="playing-card" id="playerCard">
+                            <div class="card-inner">
+                                <div class="card-back">
+                                    <div class="pattern"></div>
+                                </div>
+                                <div class="card-front" id="playerCardValue">
+                                    <span class="val">?</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- VS Divider -->
+                <div class="vs-divider">
+                    <div class="line"></div>
+                    <div class="vs-badge">VS</div>
+                    <div class="line"></div>
+                </div>
+
+                <!-- Bot Side -->
+                <div class="entity-side bot-side">
+                    <div class="entity-info">
+                        <div class="avatar b-avatar"></div>
+                        <h3>The House</h3>
+                        <p>NEXUS-01</p>
+                    </div>
+
+                    <div class="card-slot">
+                        <div class="playing-card" id="botCard">
+                            <div class="card-inner">
+                                <div class="card-back">
+                                    <div class="pattern"></div>
+                                </div>
+                                <div class="card-front bot-hologram" id="botCardValue">
+                                    <span class="val">?</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            </div>
+            
+            <!-- Result Overlay -->
+            <div id="resultOverlay" class="result-box hidden">
+                <h2 id="resultTitle">VICTORY</h2>
+                <p id="resultSubtitle">+100 SCAI</p>
+                <button class="btn-text" id="playAgainBtn">Analyze Next Run</button>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Admin Settings Modal -->
+    <div id="adminModal" class="modal-overlay hidden">
+        <div class="modal-content glass-panel">
+            <header class="modal-header">
+                <h3>PROTOCOL SETTINGS</h3>
+                <button id="closeAdminModal" class="close-btn">&times;</button>
+            </header>
+            
+            <div class="modal-body">
+                <div class="setting-item">
+                    <label>Minimum Stake (SCAI)</label>
+                    <div class="input-group">
+                        <input type="number" id="adminMinStake" step="0.1" >
+                        <button id="updateMinStake" class="btn-sm">UPDATE</button>
+                    </div>
+                </div>
+
+                <div class="setting-item">
+                    <label>Maximum Stake (SCAI)</label>
+                    <div class="input-group">
+                        <input type="number" id="adminMaxStake" step="1">
+                        <button id="updateMaxStake" class="btn-sm">UPDATE</button>
+                    </div>
+                </div>
+
+                <div class="setting-item">
+                    <label>Exchange Rate (NXT/SCAI)</label>
+                    <div class="input-group">
+                        <input type="number" id="adminExchangeRate" step="1">
+                        <button id="updateExchangeRate" class="btn-sm">UPDATE</button>
+                    </div>
+                </div>
+
+                <div class="setting-item">
+                    <label>Total Fees Collected: <span id="adminFeesCollected">0.0</span> SCAI</label>
+                </div>
+            </div>
+            
+            <footer class="modal-footer">
+                <p class="disclaimer">Only the protocol owner can push these changes to the mainnet.</p>
+            </footer>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

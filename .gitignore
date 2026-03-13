@@ -1,0 +1,9 @@
+node_modules/
+artifacts/
+cache/
+hardhat-node.log
+.env
+.DS_Store
+*.log
+
+config.js
